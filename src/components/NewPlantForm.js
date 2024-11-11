@@ -1,17 +1,58 @@
-import React from "react";
+import React, { useState } from "react";
 
-function NewPlantForm() {
+const NewPlantForm = ({ addPlant }) => {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [inStock, setInStock] = useState(true);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newPlant = {
+      id: Date.now(),
+      name,
+      price,
+      imageUrl,
+      inStock,
+    };
+    addPlant(newPlant);
+    setName("");
+    setPrice("");
+    setImageUrl("");
+  };
+
   return (
-    <div className="new-plant-form">
-      <h2>New Plant</h2>
-      <form>
-        <input type="text" name="name" placeholder="Plant name" />
-        <input type="text" name="image" placeholder="Image URL" />
-        <input type="number" name="price" step="0.01" placeholder="Price" />
-        <button type="submit">Add Plant</button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <h2>Add a New Plant</h2>
+      <input
+        type="text"
+        placeholder="Plant name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Image URL"
+        value={imageUrl}
+        onChange={(e) => setImageUrl(e.target.value)}
+      />
+      <input
+        type="text"
+        placeholder="Price"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+      />
+      <label>
+        In Stock:
+        <input
+          type="checkbox"
+          checked={inStock}
+          onChange={() => setInStock(!inStock)}
+        />
+      </label>
+      <button type="submit">Add Plant</button>
+    </form>
   );
-}
+};
 
 export default NewPlantForm;
