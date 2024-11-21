@@ -1,44 +1,55 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import App from '../../components/App';
-import '@testing-library/jest-dom';
+import React, { useState, useEffect } from "react";
+import PlantPage from "../components/PlantPage";
+import Search from "./Search"; // Import the Search component
 
-describe('1st Deliverable', () => {
-  test('displays all plants on startup', async () => {
-    global.setFetchResponse(global.basePlants)
-    let { findAllByTestId } = render(<App />);
-    const plantItems = await findAllByTestId('plant-item');
-    expect(plantItems).toHaveLength(global.basePlants.length);
+const App = () => {
+  const [plants, setPlants] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(""); // State to hold the search query
 
-    const plantNames = plantItems.map((item) => item.querySelector('h4').textContent);
-    const basePlantNames = global.basePlants.map((plant) => plant.name);
-    expect(plantNames).toEqual(basePlantNames);
+  useEffect(() => {
+    // Fetch plants data from the API
+    fetch("/plants")
+      .then((response) => response.json())
+      .then((data) => setPlants(data))
+      .catch((error) => console.error("Error fetching plants:", error));
+  }, []);
 
-    const plantImages = plantItems.map((item) => item.querySelector('img').src.split('/')[-1]);
-    const basePlantImages = global.basePlants.map((plant) => plant.image.split('/')[-1]);
-    expect(plantImages).toEqual(basePlantImages);
+  const addPlant = (newPlant) => {
+    fetch("/plants", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newPlant),
+    })
+      .then((response) => response.json())
+      .then((data) => setPlants((prevPlants) => [...prevPlants, data]));
+  };
 
-    const plantPrices = plantItems.map((item) => item.querySelector('p').textContent);
-    const basePlantPrices = global.basePlants.map((plant) => 'Price: ' + plant.price.toString());
-    expect(plantPrices).toEqual(basePlantPrices);
-  });
+  const markSoldOut = (id) => {
+    setPlants(
+      plants.map((plant) =>
+        plant.id === id ? { ...plant, soldOut: true } : plant
+      )
+    );
+  };
 
-  test('plants aren\'t hardcoded', async () => {    
-    global.setFetchResponse(global.alternatePlants)
-    let { findAllByTestId } = render(<App />);
-    const plantItems = await findAllByTestId('plant-item');
-    expect(plantItems).toHaveLength(global.alternatePlants.length);
+  // Filter plants based on search query
+  const filteredPlants = plants.filter(
+    (plant) => plant.name.toLowerCase().includes(searchQuery.toLowerCase()) // Case-insensitive search
+  );
 
-    const plantNames = plantItems.map((item) => item.querySelector('h4').textContent);
-    const basePlantNames = global.alternatePlants.map((plant) => plant.name);
-    expect(plantNames).toEqual(basePlantNames);
+  return (
+    <div>
+      <Search setSearchQuery={setSearchQuery} />{" "}
+      {/* Pass setSearchQuery to Search */}
+      <PlantPage
+        plants={filteredPlants} // Pass filtered plants to PlantPage
+        addPlant={addPlant}
+        markSoldOut={markSoldOut}
+      />
+    </div>
+  );
+};
 
-    const plantImages = plantItems.map((item) => item.querySelector('img').src.split('/')[-1]);
-    const basePlantImages = global.alternatePlants.map((plant) => plant.image.split('/')[-1]);
-    expect(plantImages).toEqual(basePlantImages);
-
-    const plantPrices = plantItems.map((item) => item.querySelector('p').textContent);
-    const basePlantPrices = global.alternatePlants.map((plant) => 'Price: ' + plant.price.toString());
-    expect(plantPrices).toEqual(basePlantPrices);
-  });
-})
+export default App;
